@@ -1,0 +1,20 @@
+{
+  "name": "fakt",
+  "private": true,
+  "description": "FAKT — приёмка строительных работ с фотофиксацией",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "dev:api": "npm run dev -w @fakt/api",
+    "dev:web": "npm run dev -w @fakt/web",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present"
+  }
+}
