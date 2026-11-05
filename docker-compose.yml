@@ -7,9 +7,9 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-fakt}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fakt_dev}
-      POSTGRES_DB: ${POSTGRES_DB:-fakt}
+      POSTGRES_USER: ${POSTGRES_USER:?задайте в .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте в .env}
+      POSTGRES_DB: ${POSTGRES_DB:?задайте в .env}
       TZ: UTC
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
@@ -28,9 +28,9 @@ services:
     restart: unless-stopped
     command: ["mini", "-dir=/data", "-master.telemetry=false"]
     environment:
-      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-fakt_dev}
-      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-fakt_dev_secret}
-      S3_BUCKET: ${S3_BUCKET:-fakt}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?задайте в .env}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?задайте в .env}
+      S3_BUCKET: ${S3_BUCKET:?задайте в .env}
     ports:
       - "127.0.0.1:${S3_PORT:-8333}:8333"
     volumes:

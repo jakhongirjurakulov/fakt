@@ -17,7 +17,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = schema.safeParse(env);
   if (!parsed.success) {
     const problems = parsed.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
-    throw new Error(`Неверные настройки окружения:\n${problems}\nСкопируйте .env.example в .env`);
+    throw new Error(`Неверные настройки окружения:\n${problems}\nЗадайте их в файле .env в корне проекта (список — в README)`);
   }
   return parsed.data;
 }
