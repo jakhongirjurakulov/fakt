@@ -1,8 +1,10 @@
 import { z } from "zod";
 
+const databaseUrl = z.string().url();
+
 const schema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3000),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: databaseUrl,
   S3_ENDPOINT: z.string().url(),
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
@@ -12,12 +14,21 @@ const schema = z.object({
 
 export type Config = z.infer<typeof schema>;
 
+function fail(issues: z.core.$ZodIssue[]): never {
+  const problems = issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
+  throw new Error(`Неверные настройки окружения:\n${problems}\nЗадайте их в файле .env в корне проекта (список — в README)`);
+}
+
 /** Читает настройки из окружения и падает сразу, если чего-то не хватает. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = schema.safeParse(env);
-  if (!parsed.success) {
-    const problems = parsed.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
-    throw new Error(`Неверные настройки окружения:\n${problems}\nЗадайте их в файле .env в корне проекта (список — в README)`);
-  }
+  if (!parsed.success) fail(parsed.error.issues);
   return parsed.data;
+}
+
+/** Только адрес базы — для миграций, которым не нужно хранилище. */
+export function loadDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const parsed = z.object({ DATABASE_URL: databaseUrl }).safeParse(env);
+  if (!parsed.success) fail(parsed.error.issues);
+  return parsed.data.DATABASE_URL;
 }

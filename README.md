@@ -32,12 +32,14 @@ docker-compose.yml   PostgreSQL и S3-хранилище (SeaweedFS) для ра
 | `DATABASE_URL` | `postgres://<user>:<password>@localhost:5432/<db>` — те же значения, что выше |
 | `S3_ENDPOINT` | `http://localhost:8333` |
 | `API_PORT`, `LOG_LEVEL` | Необязательно (3000, info) |
+| `TEST_DATABASE_URL` | Отдельная база для тестов, например `…/fakt_test`. Без неё тесты базы пропускаются |
 
 Без обязательных переменных `docker compose` и API не стартуют и пишут, чего не хватает.
 
 ```bash
 npm install
 npm run db:up        # PostgreSQL на :5432, S3 (SeaweedFS) на :8333
+npm run db:migrate   # создать таблицы
 npm run dev:api      # API на http://localhost:3000
 npm run dev:web      # веб на http://localhost:3100
 ```
@@ -50,12 +52,31 @@ npm run dev:web      # веб на http://localhost:3100
 | Команда | Что делает |
 | --- | --- |
 | `npm run db:up` / `npm run db:down` | Поднять / остановить базу и хранилище |
+| `npm run db:migrate` | Применить новые миграции |
+| `npm run db:rollback` | Откатить последнюю миграцию |
+| `npm run db:types` | Перегенерировать типы таблиц `apps/api/src/db/types.ts` из базы |
 | `npm run typecheck` | Проверка типов во всех приложениях |
 | `npm test` | Тесты |
 | `npm run build` | Сборка |
 
 Данные базы и хранилища лежат в томах Docker и переживают перезапуск.
 Стереть всё и начать с нуля: `docker compose down -v`.
+
+## База данных
+
+Работа с базой — через [Kysely](https://kysely.dev): запросы на TypeScript, близкие к SQL, с проверкой типов.
+
+- Схема описана миграциями в `apps/api/src/db/migrations/`. Новая миграция — новый файл `000N_что_делает.ts` и строка в `migrations/index.ts`. Слитую в main миграцию не меняем — пишем следующую.
+- После миграции: `npm run db:types`, чтобы TypeScript знал о новых таблицах и полях.
+- Правила, которые нельзя нарушить никаким багом, закреплены в самой базе: фото, снимки отправок и акты нельзя изменить или удалить; объекты и сотрудники не удаляются; сумма этапа фиксируется после начала работ; решение заказчика окончательное.
+
+Тестовая база создаётся один раз:
+
+```bash
+docker compose exec postgres createdb -U <POSTGRES_USER> fakt_test
+```
+
+Тесты пересоздают в ней схему при каждом запуске — рабочая база не затрагивается.
 
 ## Правила
 
