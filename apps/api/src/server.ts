@@ -1,6 +1,6 @@
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
-import { createDb, pingDb } from "./db.js";
+import { createDb, pingDb } from "./db/index.js";
 import { createStorage, pingStorage } from "./storage.js";
 
 const config = loadConfig();
@@ -12,7 +12,7 @@ const app = buildApp(
 );
 
 app.addHook("onClose", async () => {
-  await db.end();
+  await db.destroy();
   storage.client.destroy();
 });
 
