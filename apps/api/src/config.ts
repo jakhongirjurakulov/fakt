@@ -10,6 +10,13 @@ const schema = z.object({
   S3_SECRET_KEY: z.string().min(1),
   S3_BUCKET: z.string().min(1),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  // Подписывает токены доступа и хэши кодов. Длинная случайная строка, своя на каждой машине.
+  JWT_SECRET: z.string().min(32, "минимум 32 символа"),
+  // false — только чтобы проверить вход с телефона по http в локальной сети.
+  COOKIE_SECURE: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
 });
 
 export type Config = z.infer<typeof schema>;

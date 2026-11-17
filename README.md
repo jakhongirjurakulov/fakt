@@ -33,6 +33,8 @@ docker-compose.yml   PostgreSQL и S3-хранилище (SeaweedFS) для ра
 | `S3_ENDPOINT` | `http://localhost:8333` |
 | `API_PORT`, `LOG_LEVEL` | Необязательно (3000, info) |
 | `TEST_DATABASE_URL` | Отдельная база для тестов, например `…/fakt_test`. Без неё тесты базы пропускаются |
+| `JWT_SECRET` | Случайная строка от 32 символов, своя на каждой машине. Создать: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+| `COOKIE_SECURE` | Необязательно (true). `false` — только чтобы проверить вход с телефона по http в локальной сети |
 
 Без обязательных переменных `docker compose` и API не стартуют и пишут, чего не хватает.
 
@@ -40,6 +42,7 @@ docker-compose.yml   PostgreSQL и S3-хранилище (SeaweedFS) для ра
 npm install
 npm run db:up        # PostgreSQL на :5432, S3 (SeaweedFS) на :8333
 npm run db:migrate   # создать таблицы
+npm run db:create-owner -- "+998 90 123 45 67" "Имя Фамилия" "ООО Компания"   # первый пользователь
 npm run dev:api      # API на http://localhost:3000
 npm run dev:web      # веб на http://localhost:3100
 ```
@@ -55,12 +58,21 @@ npm run dev:web      # веб на http://localhost:3100
 | `npm run db:migrate` | Применить новые миграции |
 | `npm run db:rollback` | Откатить последнюю миграцию |
 | `npm run db:types` | Перегенерировать типы таблиц `apps/api/src/db/types.ts` из базы |
+| `npm run db:create-owner -- <телефон> <имя> <компания>` | Создать компанию и её руководителя |
 | `npm run typecheck` | Проверка типов во всех приложениях |
 | `npm test` | Тесты |
 | `npm run build` | Сборка |
 
 Данные базы и хранилища лежат в томах Docker и переживают перезапуск.
 Стереть всё и начать с нуля: `docker compose down -v`.
+
+## Вход
+
+Только по номеру телефона и коду из SMS, паролей нет. Регистрации в MVP нет — первого руководителя компании создаёт `npm run db:create-owner`.
+
+- **В разработке SMS не отправляются**: код пишется в лог API строкой `[SMS не отправлено, режим разработки] FAKT: код для входа 123456`.
+- Код живёт 5 минут; не больше 3 запросов за 10 минут и 5 попыток ввода на один код.
+- Токен доступа — 15 минут, в памяти вкладки. Токен обновления — 60 дней, в httpOnly cookie; при каждом обновлении заменяется на новый. Если заменённый токен приходит снова позже 30 секунд — это похоже на кражу, и все сессии пользователя отзываются.
 
 ## База данных
 

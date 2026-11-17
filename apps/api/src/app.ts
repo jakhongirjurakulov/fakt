@@ -1,10 +1,15 @@
+import cookie from "@fastify/cookie";
 import Fastify, { type FastifyServerOptions } from "fastify";
+import { authRoutes, type AuthDeps } from "./auth/routes.js";
+import { AppError } from "./errors.js";
 
 export interface AppDeps {
   /** Проверка базы. Передаётся снаружи, чтобы приложение можно было тестировать без PostgreSQL. */
   checkDb: () => Promise<boolean>;
   /** Проверка S3-хранилища: бакет на месте и ключи подходят. */
   checkStorage: () => Promise<boolean>;
+  /** Вход и профиль. Без них приложение поднимается только с /health — так проще тестировать. */
+  auth?: AuthDeps;
 }
 
 export interface ApiError {
@@ -13,9 +18,15 @@ export interface ApiError {
 
 export function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
   const app = Fastify(opts);
+  app.register(cookie);
 
   // Единый формат ошибки из контракта API.
   app.setErrorHandler<Error & { statusCode?: number; validation?: unknown }>((err, req, reply) => {
+    if (err instanceof AppError) {
+      return reply.status(err.status).send({
+        error: { code: err.code, message: err.message, ...(err.details === undefined ? {} : { details: err.details }) },
+      } satisfies ApiError);
+    }
     if (err.validation) {
       return reply.status(422).send({
         error: { code: "VALIDATION_ERROR", message: err.message, details: err.validation },
@@ -43,6 +54,8 @@ export function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
           storage: storage ? "ok" : "down",
         });
       });
+
+      if (deps.auth) await authRoutes(v1, deps.auth);
     },
     { prefix: "/api/v1" },
   );

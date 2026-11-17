@@ -1,4 +1,5 @@
 import { buildApp } from "./app.js";
+import { logSmsSender } from "./auth/sms.js";
 import { loadConfig } from "./config.js";
 import { createDb, pingDb } from "./db/index.js";
 import { createStorage, pingStorage } from "./storage.js";
@@ -7,7 +8,11 @@ const config = loadConfig();
 const db = createDb(config.DATABASE_URL);
 const storage = createStorage(config);
 const app = buildApp(
-  { checkDb: () => pingDb(db), checkStorage: () => pingStorage(storage) },
+  {
+    checkDb: () => pingDb(db),
+    checkStorage: () => pingStorage(storage),
+    auth: { db, sms: logSmsSender, jwtSecret: config.JWT_SECRET, cookieSecure: config.COOKIE_SECURE },
+  },
   { logger: { level: config.LOG_LEVEL } },
 );
 

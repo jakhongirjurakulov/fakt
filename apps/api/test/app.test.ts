@@ -37,18 +37,24 @@ describe("ошибки", () => {
 });
 
 describe("loadConfig", () => {
+  it("не принимает короткий JWT_SECRET", () => {
+    expect(() => loadConfig({ ...valid, JWT_SECRET: "short" })).toThrow(/JWT_SECRET/);
+  });
+
   const valid = {
     DATABASE_URL: "postgres://u:p@localhost:5432/db",
     S3_ENDPOINT: "http://localhost:8333",
     S3_ACCESS_KEY: "k",
     S3_SECRET_KEY: "s",
     S3_BUCKET: "b",
+    JWT_SECRET: "x".repeat(32),
   };
 
   it("подставляет значения по умолчанию", () => {
     const cfg = loadConfig(valid);
     expect(cfg.API_PORT).toBe(3000);
     expect(cfg.LOG_LEVEL).toBe("info");
+    expect(cfg.COOKIE_SECURE).toBe(true);
   });
 
   it("падает с понятным сообщением без DATABASE_URL", () => {

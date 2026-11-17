@@ -121,6 +121,17 @@ export interface Photos {
   width: number;
 }
 
+export interface RefreshTokens {
+  created_at: Generated<Timestamp>;
+  expires_at: Timestamp;
+  id: Generated<string>;
+  replaced_by: string | null;
+  revoked_at: Timestamp | null;
+  token_hash: string;
+  user_agent: string | null;
+  user_id: string;
+}
+
 export interface Remarks {
   created_at: Generated<Timestamp>;
   stage_item_id: string;
@@ -205,6 +216,7 @@ export interface DB {
   object_members: ObjectMembers;
   objects: Objects;
   photos: Photos;
+  refresh_tokens: RefreshTokens;
   remarks: Remarks;
   review_links: ReviewLinks;
   stage_items: StageItems;
